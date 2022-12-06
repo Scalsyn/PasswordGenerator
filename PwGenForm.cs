@@ -13,7 +13,7 @@ namespace PasswordGenerator
     {
         #region GLOBALS
 
-        //Start and End position in ASCII codetable.
+        //Start and End position in ASCII codetable:
         const byte LETTER_BEGIN = 97;
         const byte LETTER_END = 123;
         const byte CAPITAL_BEGIN = 65;
@@ -22,10 +22,11 @@ namespace PasswordGenerator
         const byte SYMBOLE_END = 39;
         const byte NUMBER_BEGIN = 48;
         const byte NUMBER_END = 58;
-        
+        //Password generation logic:
         float CAPITAL_CHANCE = 4.0f;
         float NUMBER_CHANCE = 4.0f;
         float SYMBOLE_CHANCE = 5.0f;
+        //Password classification logic:
         float CAPITAL_MODIFIER = 1.4f;
         float SYMBOLE_MODIFIER = 1.3f;
         float NUMBER_MODIFIER = 1.2f;
