@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Text;
 using System.Web;
 using System.Xml.Linq;
+using System.Configuration;
 
 
 namespace PasswordGenerator
@@ -21,6 +22,18 @@ namespace PasswordGenerator
         const byte SYMBOLE_END = 39;
         const byte NUMBER_BEGIN = 48;
         const byte NUMBER_END = 58;
+        
+        float CAPITAL_CHANCE = 4.0f;
+        float NUMBER_CHANCE = 4.0f;
+        float SYMBOLE_CHANCE = 5.0f;
+        float CAPITAL_MODIFIER = 1.4f;
+        float SYMBOLE_MODIFIER = 1.3f;
+        float NUMBER_MODIFIER = 1.2f;
+        float SCORE_WEAK = 8.0f;
+        float SCORE_SECURE = 16.0f;
+        float SCORE_STRONG = 35.0f;
+
+        string VAULT_PATH = "VAULT.txt";
 
         Random rnd;
         List<Password> vaultList;
@@ -39,10 +52,10 @@ namespace PasswordGenerator
 
             //Create VAULT text file if it doesn't exist.
             //If it does, open it and fill the vaultList table with all tha data.
-            if (!File.Exists("VAULT.txt"))
-                using (FileStream fs = File.Create("VAULT.txt")) ;
+            if (!File.Exists(VAULT_PATH))
+                using (FileStream fs = File.Create(VAULT_PATH)) ;
             else
-                using (StreamReader sr = new StreamReader("VAULT.txt", Encoding.UTF8))
+                using (StreamReader sr = new StreamReader(VAULT_PATH, Encoding.UTF8))
                     while (!sr.EndOfStream)
                         vaultList.Add(new Password(sr.ReadLine()));
         }
@@ -119,7 +132,7 @@ namespace PasswordGenerator
             vaultList.Add(new Password($"{name}|{passw}"));
 
             //Add new data to the VAULT text file.
-            using (StreamWriter sw = new StreamWriter("VAULT.txt", true, Encoding.UTF8))
+            using (StreamWriter sw = new StreamWriter(VAULT_PATH, true, Encoding.UTF8))
                 sw.WriteLine($"{name}|{passw}");
 
             //Form clean up.
@@ -150,7 +163,7 @@ namespace PasswordGenerator
             //Also clear data from the list.
             if (dr == DialogResult.Yes)
             {
-                FileStream fs = File.Open("VAULT.txt", FileMode.Open);
+                FileStream fs = File.Open(VAULT_PATH, FileMode.Open);
                 fs.SetLength(0);
                 fs.Close();
                 vaultList.Clear();
@@ -170,7 +183,7 @@ namespace PasswordGenerator
             //First fill the array with the capital letters if it's enabled.
             if (isCapitalOn == true)
             {
-                for (int i = 0; i < (int)Math.Floor(length / 4.0); i++)
+                for (int i = 0; i < (int)Math.Floor(length / CAPITAL_CHANCE); i++)
                 {
                     passwordArray[index] = (char)rnd.Next(CAPITAL_BEGIN, CAPITAL_END);
                     index++;
@@ -179,7 +192,7 @@ namespace PasswordGenerator
             //Then continue with the symboles if it's enabled.
             if (isSymboleOn == true)
             {
-                for (int i = 0; i < (int)Math.Floor(length / 5.0); i++)
+                for (int i = 0; i < (int)Math.Floor(length / SYMBOLE_CHANCE); i++)
                 {
                     passwordArray[index] = (char)rnd.Next(SYMBOLE_BEGIN, SYMBOLE_END);
                     index++;
@@ -188,7 +201,7 @@ namespace PasswordGenerator
             //Then continue with the numbers if it's enabled.
             if (isNumberOn == true)
             {
-                for (int i = 0; i < (int)Math.Floor(length / 4.0); i++)
+                for (int i = 0; i < (int)Math.Floor(length / NUMBER_CHANCE); i++)
                 {
                     passwordArray[index] = (char)rnd.Next(NUMBER_BEGIN, NUMBER_END);
                     index++;
@@ -215,29 +228,29 @@ namespace PasswordGenerator
             float passwordStrengthScore = (float)length;
 
             //Modifiers: Capital - 40%, Numbers - 30%, Symboles - 20% increase.
-            if (isCapitalOn == true) passwordStrengthScore *= 1.4f;
-            if (isNumberOn == true) passwordStrengthScore *= 1.3f;
-            if (isSymboleOn == true) passwordStrengthScore *= 1.2f;
+            if (isCapitalOn == true) passwordStrengthScore *= CAPITAL_MODIFIER;
+            if (isNumberOn == true) passwordStrengthScore *= NUMBER_MODIFIER;
+            if (isSymboleOn == true) passwordStrengthScore *= SYMBOLE_MODIFIER;
 
             //Classification by the strength score value.
-            if (passwordStrengthScore < 8.0f)
+            if (passwordStrengthScore < SCORE_WEAK)
             {
-                lbl_pwStrength.Text = "The passwordArray is very weak!";
+                lbl_pwStrength.Text = "The password is weak!";
                 lbl_pwStrength.ForeColor = Color.Red;
             }
-            else if (passwordStrengthScore >= 8.0f && passwordStrengthScore < 16.0f)
+            else if (passwordStrengthScore >= SCORE_WEAK && passwordStrengthScore < SCORE_SECURE)
             {
-                lbl_pwStrength.Text = "The passwordArray is not secure!";
+                lbl_pwStrength.Text = "The password is not secure!";
                 lbl_pwStrength.ForeColor = Color.Red;
             }
-            else if (passwordStrengthScore >= 16.0f && passwordStrengthScore < 35.0f)
+            else if (passwordStrengthScore >= SCORE_SECURE && passwordStrengthScore < SCORE_STRONG)
             {
-                lbl_pwStrength.Text = "The passwordArray is secure!";
+                lbl_pwStrength.Text = "The password is secure!";
                 lbl_pwStrength.ForeColor = Color.Green;
             }
             else
             {
-                lbl_pwStrength.Text = "The passwordArray is very secure!";
+                lbl_pwStrength.Text = "The password is strong!";
                 lbl_pwStrength.ForeColor = Color.DarkGreen;
             }
         }
