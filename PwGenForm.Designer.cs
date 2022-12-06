@@ -42,6 +42,7 @@
             this.txtbox_vault = new System.Windows.Forms.TextBox();
             this.lbl_message = new System.Windows.Forms.Label();
             this.btn_vaultClear = new System.Windows.Forms.Button();
+            this.lbl_pwStrength = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.num_length)).BeginInit();
             this.SuspendLayout();
             // 
@@ -94,7 +95,7 @@
             // txtbox_password
             // 
             this.txtbox_password.Font = new System.Drawing.Font("Segoe UI", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.txtbox_password.Location = new System.Drawing.Point(12, 565);
+            this.txtbox_password.Location = new System.Drawing.Point(12, 504);
             this.txtbox_password.MaxLength = 40;
             this.txtbox_password.Name = "txtbox_password";
             this.txtbox_password.ReadOnly = true;
@@ -106,7 +107,7 @@
             // 
             this.btn_generate.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btn_generate.Font = new System.Drawing.Font("Georgia", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.btn_generate.Location = new System.Drawing.Point(391, 480);
+            this.btn_generate.Location = new System.Drawing.Point(392, 428);
             this.btn_generate.Name = "btn_generate";
             this.btn_generate.Size = new System.Drawing.Size(190, 70);
             this.btn_generate.TabIndex = 5;
@@ -166,7 +167,7 @@
             this.btn_copy.Cursor = System.Windows.Forms.Cursors.Hand;
             this.btn_copy.Enabled = false;
             this.btn_copy.Font = new System.Drawing.Font("Georgia", 18F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.btn_copy.Location = new System.Drawing.Point(826, 643);
+            this.btn_copy.Location = new System.Drawing.Point(826, 565);
             this.btn_copy.Name = "btn_copy";
             this.btn_copy.Size = new System.Drawing.Size(140, 60);
             this.btn_copy.TabIndex = 6;
@@ -182,7 +183,7 @@
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(691, 41);
             this.label3.TabIndex = 10;
-            this.label3.Text = "Add password to vault:                                  \r\n";
+            this.label3.Text = "Add passwordArray to vault:                                  \r\n";
             // 
             // txtbox_vault
             // 
@@ -216,12 +217,22 @@
             this.btn_vaultClear.UseVisualStyleBackColor = true;
             this.btn_vaultClear.Click += new System.EventHandler(this.btn_vaultClear_Click);
             // 
+            // lbl_pwStrength
+            // 
+            this.lbl_pwStrength.AutoSize = true;
+            this.lbl_pwStrength.Font = new System.Drawing.Font("Georgia", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
+            this.lbl_pwStrength.Location = new System.Drawing.Point(12, 585);
+            this.lbl_pwStrength.Name = "lbl_pwStrength";
+            this.lbl_pwStrength.Size = new System.Drawing.Size(0, 29);
+            this.lbl_pwStrength.TabIndex = 101;
+            // 
             // PwGenForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 25F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.Wheat;
             this.ClientSize = new System.Drawing.Size(978, 944);
+            this.Controls.Add(this.lbl_pwStrength);
             this.Controls.Add(this.btn_vaultClear);
             this.Controls.Add(this.lbl_message);
             this.Controls.Add(this.txtbox_vault);
@@ -260,5 +271,6 @@
         private TextBox txtbox_vault;
         private Label lbl_message;
         private Button btn_vaultClear;
+        private Label lbl_pwStrength;
     }
 }

@@ -1,4 +1,6 @@
+using System;
 using System.IO;
+using System.Reflection;
 using System.Text;
 using System.Web;
 using System.Xml.Linq;
@@ -10,6 +12,7 @@ namespace PasswordGenerator
     {
         #region GLOBALS
 
+        //Start and End position in ASCII codetable.
         const byte LETTER_BEGIN = 97;
         const byte LETTER_END = 123;
         const byte CAPITAL_BEGIN = 65;
@@ -20,8 +23,8 @@ namespace PasswordGenerator
         const byte NUMBER_END = 58;
 
         Random rnd;
-        StringBuilder sb;
         List<Password> vaultList;
+        char[] passwordArray;
 
         #endregion
 
@@ -31,9 +34,11 @@ namespace PasswordGenerator
         {
             InitializeComponent();
             rnd = new Random();
-            sb = new StringBuilder();
             vaultList = new List<Password>();
+            passwordArray = new char[txtbox_password.MaxLength];
 
+            //Create VAULT text file if it doesn't exist.
+            //If it does, open it and fill the vaultList table with all tha data.
             if (!File.Exists("VAULT.txt"))
                 using (FileStream fs = File.Create("VAULT.txt")) ;
             else
@@ -44,34 +49,32 @@ namespace PasswordGenerator
 
         private void btn_generate_Click(object sender, EventArgs e)
         {
+            //Setup check box logic.
             bool isCapitalOn = chbox_captialLetter.Checked;
             bool isSymboleOn = chbox_symboles.Checked;
             bool isNumberOn = chbox_number.Checked;
             int length = (int)num_length.Value;
+            int index = 0;
 
+            //Enable Copy button only if the passwordArray textbox is filled.
             if (length > 0)
                 btn_copy.Enabled = true;
 
-            for (int i = 0; i < length; i++)
-            {
-                switch (rnd.Next(0, 10))
-                {
-                    case 0:
-                    case 1:
-                    case 2:
-                    case 3:
-                    case 4: sb.Append(GenerateRandomLetter(isCapitalOn)); break;
-                    case 5:
-                    case 6:
-                    case 7: sb.Append(GenerateRandomNumber(isCapitalOn, isNumberOn)); break;
-                    case 8:
-                    case 9: sb.Append(GenerateRandomSymbole(isCapitalOn, isSymboleOn)); break;
-                    default: sb.Append(GenerateRandomLetter(isCapitalOn)); break;
-                }
-            }
+            //Password creation. It picks random characters according to the check box logic.
+            //Every 4th character is a capital, every 4th is a number and every 5th is a symbole.
+            //The generated characters are added to the global char array in order.
+            GenerateRandomArray(isCapitalOn, isSymboleOn, isNumberOn, length);
 
-            txtbox_password.Text = sb.ToString();
-            sb.Clear();
+            //Call function to randomize (random sort) the array until the given length.
+            ShuffleArray(length);
+
+            //Password strength calculation. It creates a score value which is cassified.
+            //It's based on length and modified by attributes from the checkboxes.
+            CalculatePasswordStrength(length, isCapitalOn, isSymboleOn, isNumberOn);
+            //Convert the char array into a string. The string will have the given length.
+            txtbox_password.Text = ConverCharArrayToString();
+            //Turn every element of the array into '\0' character for the next password generation.
+            ClearPasswordArray();
             lbl_message.Text = "";
         }
 
@@ -85,14 +88,16 @@ namespace PasswordGenerator
             string name = txtbox_vault.Text;
             string passw = txtbox_password.Text;
 
+            //I. condition: if passwordArray is not filled, abort and inform the user.
             if (passw.Length < 6)
             {
-                lbl_message.Text = "First generate a password!";
+                lbl_message.Text = "First generate a passwordArray!";
                 txtbox_vault.Text = "";
                 btn_vaultAdd.Enabled = false;
                 return;
             }
 
+            //II. condition: if name is too short, abort and inform the user.
             if (name.Length < 4)
             {
                 lbl_message.Text = "The name must be longer than 3 characters!";
@@ -101,6 +106,7 @@ namespace PasswordGenerator
                 return;
             }
 
+            //III. condition: if name is already in the list, abort and inform user.
             if (IsNameInList(name))
             {
                 lbl_message.Text = "This name already exists in the vault!";
@@ -109,14 +115,18 @@ namespace PasswordGenerator
                 return;
             }
 
+            //Add new data to the list.
             vaultList.Add(new Password($"{name}|{passw}"));
 
+            //Add new data to the VAULT text file.
             using (StreamWriter sw = new StreamWriter("VAULT.txt", true, Encoding.UTF8))
                 sw.WriteLine($"{name}|{passw}");
 
+            //Form clean up.
             lbl_message.Text = "Password is successfully saved!";
             txtbox_vault.Text = "";
             txtbox_password.Text = "";
+            lbl_pwStrength.Text = "";
             btn_copy.Enabled = false;
             btn_vaultAdd.Enabled = false;
         }
@@ -131,14 +141,19 @@ namespace PasswordGenerator
 
         private void btn_vaultClear_Click(object sender, EventArgs e)
         {
+            //Ask user for assurance before delete all passwords.
+            //Use a massage window for assurance feedback.
             DialogResult dr = MessageBox.Show("Are you sure to delete all the saved passwords?",
                       "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
+            //If user pressed Yes, then clear all data from VAULT text file with 0 stream length.
+            //Also clear data from the list.
             if (dr == DialogResult.Yes)
             {
                 FileStream fs = File.Open("VAULT.txt", FileMode.Open);
                 fs.SetLength(0);
                 fs.Close();
+                vaultList.Clear();
                 lbl_message.Text = "The vault has been successfully cleared!";
             }
         }
@@ -147,31 +162,44 @@ namespace PasswordGenerator
 
         #region FUNCTIONS
 
-        char GenerateRandomLetter(bool isCapitalOn)
+        void GenerateRandomArray(bool isCapitalOn, bool isSymboleOn, bool isNumberOn, int length)
         {
+            //Create a helper index to know where we at in the array.
+            int index = 0;
+
+            //First fill the array with the capital letters if it's enabled.
             if (isCapitalOn == true)
-                if (rnd.Next(3) == 1)
-                    return (char)rnd.Next(CAPITAL_BEGIN, CAPITAL_END);
-
-            return (char)rnd.Next(LETTER_BEGIN, LETTER_END);
-        }
-
-        char GenerateRandomSymbole(bool isCapitalOn, bool isSymboleOn)
-        {
+            {
+                for (int i = 0; i < (int)Math.Floor(length / 4.0); i++)
+                {
+                    passwordArray[index] = (char)rnd.Next(CAPITAL_BEGIN, CAPITAL_END);
+                    index++;
+                }
+            }
+            //Then continue with the symboles if it's enabled.
             if (isSymboleOn == true)
-                return (char)rnd.Next(SYMBOLE_BEGIN, SYMBOLE_END);
-
-            return GenerateRandomLetter(isCapitalOn);
-        }
-
-        char GenerateRandomNumber(bool isCapitalOn, bool isNumberOn)
-        {
+            {
+                for (int i = 0; i < (int)Math.Floor(length / 5.0); i++)
+                {
+                    passwordArray[index] = (char)rnd.Next(SYMBOLE_BEGIN, SYMBOLE_END);
+                    index++;
+                }
+            }
+            //Then continue with the numbers if it's enabled.
             if (isNumberOn == true)
-                return (char)rnd.Next(NUMBER_BEGIN, NUMBER_END);
-
-            return GenerateRandomLetter(isCapitalOn);
+            {
+                for (int i = 0; i < (int)Math.Floor(length / 4.0); i++)
+                {
+                    passwordArray[index] = (char)rnd.Next(NUMBER_BEGIN, NUMBER_END);
+                    index++;
+                }
+            }
+            //Finally, finish the rest with the lowercase letters unit we rach the given length.
+            //The rest of the array will remain '\0' character.
+            for (int i = index; i < length; i++)
+                passwordArray[i] = (char)rnd.Next(LETTER_BEGIN, LETTER_END);
         }
-
+        
         bool IsNameInList(string name)
         {
             foreach (Password pw in vaultList)
@@ -179,6 +207,75 @@ namespace PasswordGenerator
                     return true;
 
             return false;
+        }
+
+        void CalculatePasswordStrength(int length, bool isCapitalOn, bool isSymboleOn, bool isNumberOn)
+        {
+            //The base vaule is the length.
+            float passwordStrengthScore = (float)length;
+
+            //Modifiers: Capital - 40%, Numbers - 30%, Symboles - 20% increase.
+            if (isCapitalOn == true) passwordStrengthScore *= 1.4f;
+            if (isNumberOn == true) passwordStrengthScore *= 1.3f;
+            if (isSymboleOn == true) passwordStrengthScore *= 1.2f;
+
+            //Classification by the strength score value.
+            if (passwordStrengthScore < 8.0f)
+            {
+                lbl_pwStrength.Text = "The passwordArray is very weak!";
+                lbl_pwStrength.ForeColor = Color.Red;
+            }
+            else if (passwordStrengthScore >= 8.0f && passwordStrengthScore < 16.0f)
+            {
+                lbl_pwStrength.Text = "The passwordArray is not secure!";
+                lbl_pwStrength.ForeColor = Color.Red;
+            }
+            else if (passwordStrengthScore >= 16.0f && passwordStrengthScore < 35.0f)
+            {
+                lbl_pwStrength.Text = "The passwordArray is secure!";
+                lbl_pwStrength.ForeColor = Color.Green;
+            }
+            else
+            {
+                lbl_pwStrength.Text = "The passwordArray is very secure!";
+                lbl_pwStrength.ForeColor = Color.DarkGreen;
+            }
+        }
+
+        void ClearPasswordArray()
+        {
+            for (int i = 0; i < passwordArray.Length; i++)
+                passwordArray[i] = '\0';
+        }
+        
+        string ConverCharArrayToString()
+        {
+            //We use string builder as the password length can be long.
+            StringBuilder sb = new StringBuilder();
+
+            //The end of the array is when we reach the '\0' character.
+            //That's how we know how long the password is.
+            //We don't want to append '\0' characters to out final string.
+            for (int i = 0; i < passwordArray.Length; i++)
+            {
+                if (passwordArray[i] == '\0') break;
+                sb.Append(passwordArray[i]);
+            }
+            return sb.ToString();
+        }
+
+        void ShuffleArray(int length)
+        {
+            //It's a typical random sort.
+            //It's randomly moving elements within the given length (max index with is decreasing).
+            //It counts from the given length until it reaches 1.
+            while (length > 1)
+            {
+                int k = rnd.Next(length--);
+                char tmp = passwordArray[length];
+                passwordArray[length] = passwordArray[k];
+                passwordArray[k] = tmp;
+            }
         }
 
         #endregion
