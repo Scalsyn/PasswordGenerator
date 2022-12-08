@@ -234,7 +234,6 @@ namespace PasswordGenerator
 
         bool IsNameProper(string name)
         {
-            Regex r = new Regex(name);
             return Regex.IsMatch(name, @"^[a-zA-Z]+$");
         }
         
