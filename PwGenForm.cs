@@ -5,7 +5,7 @@ using System.Text;
 using System.Web;
 using System.Xml.Linq;
 using System.Configuration;
-
+using System.Text.RegularExpressions;
 
 namespace PasswordGenerator
 {
@@ -22,10 +22,11 @@ namespace PasswordGenerator
         const byte SYMBOLE_END = 39;
         const byte NUMBER_BEGIN = 48;
         const byte NUMBER_END = 58;
-        
+        //Password generation logic:
         float CAPITAL_CHANCE = 4.0f;
         float NUMBER_CHANCE = 4.0f;
         float SYMBOLE_CHANCE = 5.0f;
+        //Password classification logic:
         float CAPITAL_MODIFIER = 1.4f;
         float SYMBOLE_MODIFIER = 1.3f;
         float NUMBER_MODIFIER = 1.2f;
@@ -33,7 +34,7 @@ namespace PasswordGenerator
         float SCORE_SECURE = 16.0f;
         float SCORE_STRONG = 35.0f;
 
-        string VAULT_PATH = "VAULT.txt";
+        const string VAULT_PATH = "VAULT.txt";
 
         Random rnd;
         List<Password> vaultList;
@@ -53,7 +54,7 @@ namespace PasswordGenerator
             //Create VAULT text file if it doesn't exist.
             //If it does, open it and fill the vaultList table with all tha data.
             if (!File.Exists(VAULT_PATH))
-                using (FileStream fs = File.Create(VAULT_PATH)) ;
+                using (FileStream fs = File.Create(VAULT_PATH));
             else
                 using (StreamReader sr = new StreamReader(VAULT_PATH, Encoding.UTF8))
                     while (!sr.EndOfStream)
@@ -104,7 +105,7 @@ namespace PasswordGenerator
             //I. condition: if passwordArray is not filled, abort and inform the user.
             if (passw.Length < 6)
             {
-                lbl_message.Text = "First generate a passwordArray!";
+                lbl_message.Text = "First generate a password!";
                 txtbox_vault.Text = "";
                 btn_vaultAdd.Enabled = false;
                 return;
@@ -119,7 +120,16 @@ namespace PasswordGenerator
                 return;
             }
 
-            //III. condition: if name is already in the list, abort and inform user.
+            //III. condition: if the name contains numbers or special characters, abort and inform user.
+            if (IsNameProper(name) == false)
+            {
+                lbl_message.Text = "The name can only contain letters!";
+                txtbox_vault.Text = "";
+                btn_vaultAdd.Enabled = false;
+                return;
+            }
+            
+            //IV. condition: if name is already in the list, abort and inform user.
             if (IsNameInList(name))
             {
                 lbl_message.Text = "This name already exists in the vault!";
@@ -222,6 +232,12 @@ namespace PasswordGenerator
             return false;
         }
 
+        bool IsNameProper(string name)
+        {
+            Regex r = new Regex(name);
+            return Regex.IsMatch(name, @"^[a-zA-Z]+$");
+        }
+        
         void CalculatePasswordStrength(int length, bool isCapitalOn, bool isSymboleOn, bool isNumberOn)
         {
             //The base vaule is the length.
