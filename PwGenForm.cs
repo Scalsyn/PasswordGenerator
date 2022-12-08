@@ -13,7 +13,7 @@ namespace PasswordGenerator
     {
         #region GLOBALS
 
-        //Start and End position in ASCII codetable.
+        //Start and End position in ASCII codetable:
         const byte LETTER_BEGIN = 97;
         const byte LETTER_END = 123;
         const byte CAPITAL_BEGIN = 65;
